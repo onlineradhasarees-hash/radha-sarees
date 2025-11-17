@@ -6,7 +6,10 @@ import { FileText, Download } from "lucide-react";
 import { toast } from "sonner";
 
 export function ReportManagement() {
-  const { products, orders, customers } = useStore();
+  const { products, orders, customerProfiles } = useStore();
+
+  // Convert customerProfiles object to array
+  const customers = Object.values(customerProfiles);
 
   const generateProductsCSV = () => {
     const headers = ["ID", "Name", "Category", "Price", "Stock", "Tags"];
@@ -116,25 +119,25 @@ export function ReportManagement() {
         <Card>
           <CardContent className="p-6">
             <p className="text-muted-foreground mb-1">Total Products</p>
-            <h3>{products.length}</h3>
+            <h3 className="text-foreground">{products.length}</h3>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-6">
             <p className="text-muted-foreground mb-1">Total Orders</p>
-            <h3>{orders.length}</h3>
+            <h3 className="text-foreground">{orders.length}</h3>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-6">
             <p className="text-muted-foreground mb-1">Total Revenue</p>
-            <h3>₹{totalRevenue.toLocaleString('en-IN')}</h3>
+            <h3 className="text-foreground">₹{totalRevenue.toLocaleString('en-IN')}</h3>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-6">
             <p className="text-muted-foreground mb-1">Avg Order Value</p>
-            <h3>₹{Math.round(averageOrderValue).toLocaleString('en-IN')}</h3>
+            <h3 className="text-foreground">₹{Math.round(averageOrderValue).toLocaleString('en-IN')}</h3>
           </CardContent>
         </Card>
       </div>

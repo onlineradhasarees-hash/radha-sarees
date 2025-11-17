@@ -17,13 +17,8 @@ import { ImageWithFallback } from "../figma/ImageWithFallback";
 import { Upload, X, Image as ImageIcon, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
-interface CategoryImage {
-  category: string;
-  imageUrl: string;
-}
-
 export function ImageManagement() {
-  const { categoryImages } = useStore();
+  const { siteSettings } = useStore();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [imageUrl, setImageUrl] = useState("");
@@ -38,7 +33,22 @@ export function ImageManagement() {
       return;
     }
 
-    const success = await syncedActions.updateCategoryImage(selectedCategory, imageUrl);
+    const currentImages = siteSettings.categoryImages || [];
+    const existingIndex = currentImages.findIndex(img => img.name === selectedCategory);
+    
+    let updatedImages;
+    if (existingIndex >= 0) {
+      // Update existing
+      updatedImages = [...currentImages];
+      updatedImages[existingIndex] = { name: selectedCategory, url: imageUrl };
+    } else {
+      // Add new
+      updatedImages = [...currentImages, { name: selectedCategory, url: imageUrl }];
+    }
+
+    const success = await syncedActions.updateSiteSettings({
+      categoryImages: updatedImages
+    });
     
     if (success) {
       toast.success("Category image updated successfully!");
@@ -50,7 +60,13 @@ export function ImageManagement() {
 
   const handleRemoveCategoryImage = async (category: string) => {
     if (confirm(`Remove image for ${category} category?`)) {
-      const success = await syncedActions.updateCategoryImage(category, "");
+      const currentImages = siteSettings.categoryImages || [];
+      const updatedImages = currentImages.filter(img => img.name !== category);
+      
+      const success = await syncedActions.updateSiteSettings({
+        categoryImages: updatedImages
+      });
+      
       if (success) {
         toast.success("Category image removed!");
       }
@@ -58,7 +74,8 @@ export function ImageManagement() {
   };
 
   const getCategoryImage = (category: string) => {
-    return categoryImages.find(ci => ci.category === category)?.imageUrl || "";
+    const categoryImages = siteSettings.categoryImages || [];
+    return categoryImages.find(img => img.name === category)?.url || "";
   };
 
   return (
@@ -90,7 +107,7 @@ export function ImageManagement() {
                   id="category"
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="w-full px-3 py-2 border border-input bg-background rounded-md"
+                  className="w-full px-3 py-2 border border-input bg-background rounded-md text-foreground"
                   required
                 >
                   <option value="">Select a category</option>
