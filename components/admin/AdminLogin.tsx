@@ -7,7 +7,7 @@ import { Lock, User } from "lucide-react";
 import { toast } from "sonner";
 
 interface AdminLoginProps {
-  onLogin: (username: string, password: string) => boolean;
+  onLogin: (username: string, password: string) => Promise<boolean> | boolean;
 }
 
 export function AdminLogin({ onLogin }: AdminLoginProps) {
@@ -15,23 +15,23 @@ export function AdminLogin({ onLogin }: AdminLoginProps) {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulate authentication delay
-    setTimeout(() => {
-      const success = onLogin(username, password);
+    try {
+      const success = await onLogin(username, password);
       
-      if (success) {
-        toast.success("Login successful!");
-      } else {
+      if (!success) {
         toast.error("Invalid credentials. Please try again.");
         setPassword("");
       }
-      
+    } catch (error) {
+      toast.error("Login failed. Please try again.");
+      console.error('Login error:', error);
+    } finally {
       setIsLoading(false);
-    }, 500);
+    }
   };
 
   return (

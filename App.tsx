@@ -11,11 +11,10 @@ import { Features } from "./components/Features";
 import { ProductGrid } from "./components/ProductGrid";
 import { Cart } from "./components/Cart";
 import { Checkout } from "./components/Checkout";
-import { AdminDashboard } from "./components/admin/AdminDashboard";
+import { AdminPanel } from "./components/admin/AdminPanel";
 import { CustomerAuth } from "./components/CustomerAuth";
 import { CustomerDashboard } from "./components/CustomerDashboard";
 import { Button } from "./components/ui/button";
-import { Settings } from "lucide-react";
 import { toast } from "sonner";
 
 type ViewType = 'store' | 'admin' | 'product' | 'category' | 'customer-dashboard';
@@ -104,7 +103,7 @@ export default function App() {
 
   // If admin view, render admin panel
   if (view === 'admin') {
-    return <AdminDashboard />;
+    return <AdminPanel />;
   }
 
   // If customer dashboard view, render customer dashboard
@@ -338,20 +337,6 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Admin Link - Fixed position */}
-      <a
-        href="#admin"
-        className="fixed bottom-6 right-6 z-50"
-      >
-        <Button
-          size="lg"
-          className="rounded-full shadow-lg hover:shadow-xl transition-shadow"
-        >
-          <Settings className="h-5 w-5 mr-2" />
-          Admin Panel
-        </Button>
-      </a>
-
       <Header
         cartItems={totalCartItems}
         onCartClick={() => setIsCartOpen(true)}
