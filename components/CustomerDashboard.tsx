@@ -19,7 +19,9 @@ import {
   Eye,
   Home,
   Loader2,
-  X
+  X,
+  Plus,
+  Menu
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -48,6 +50,28 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
   });
   const [selectedInvoice, setSelectedInvoice] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showPaymentMethodForm, setShowPaymentMethodForm] = useState(false);
+  const [showBillingAddressForm, setShowBillingAddressForm] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
+
+  // Payment method form state
+  const [paymentMethodData, setPaymentMethodData] = useState({
+    type: 'card',
+    name: '',
+    cardNumber: '',
+    expiryDate: '',
+    cvv: ''
+  });
+
+  // Billing address form state
+  const [billingAddressData, setBillingAddressData] = useState({
+    name: '',
+    address: '',
+    city: '',
+    state: '',
+    pincode: '',
+    phone: ''
+  });
 
   // Update profile data when currentCustomer changes
   useEffect(() => {
@@ -135,11 +159,66 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
 
   const handleDownloadInvoice = (orderId: string) => {
     toast.success(`Invoice for ${orderId} downloaded`);
-    // In a real app, this would generate and download a PDF
   };
 
   const handleViewInvoice = (orderId: string) => {
     setSelectedInvoice(orderId);
+  };
+
+  const handleAddPaymentMethod = async () => {
+    if (!paymentMethodData.name || !paymentMethodData.cardNumber) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    try {
+      const maskedCardNumber = `**** **** **** ${paymentMethodData.cardNumber.slice(-4)}`;
+      await syncedActions.addPaymentMethod({
+        type: paymentMethodData.type,
+        name: paymentMethodData.name,
+        details: maskedCardNumber,
+        isDefault: customerPaymentMethods.length === 0
+      });
+      toast.success("Payment method added");
+      setShowPaymentMethodForm(false);
+      setPaymentMethodData({
+        type: 'card',
+        name: '',
+        cardNumber: '',
+        expiryDate: '',
+        cvv: ''
+      });
+    } catch (error) {
+      console.error('Error adding payment method:', error);
+      toast.error("Failed to add payment method");
+    }
+  };
+
+  const handleAddBillingAddress = async () => {
+    if (!billingAddressData.name || !billingAddressData.address || !billingAddressData.city) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    try {
+      await syncedActions.addBillingAddress({
+        ...billingAddressData,
+        isDefault: customerBillingAddresses.length === 0
+      });
+      toast.success("Billing address added");
+      setShowBillingAddressForm(false);
+      setBillingAddressData({
+        name: '',
+        address: '',
+        city: '',
+        state: '',
+        pincode: '',
+        phone: ''
+      });
+    } catch (error) {
+      console.error('Error adding billing address:', error);
+      toast.error("Failed to add billing address");
+    }
   };
 
   const renderInvoice = (orderId: string) => {
@@ -157,7 +236,6 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
           </button>
 
           <div className="space-y-6">
-            {/* Invoice Header */}
             <div className="text-center space-y-2">
               <h1 style={{ 
                 fontFamily: 'var(--font-family-script)', 
@@ -171,7 +249,6 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
 
             <Separator />
 
-            {/* Invoice Details */}
             <div className="grid grid-cols-2 gap-6">
               <div>
                 <h3 className="mb-2">Invoice To:</h3>
@@ -199,7 +276,6 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
 
             <Separator />
 
-            {/* Items Table */}
             <div>
               <table className="w-full">
                 <thead>
@@ -223,7 +299,6 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
               </table>
             </div>
 
-            {/* Total */}
             <div className="flex justify-end">
               <div className="w-64 space-y-2">
                 <div className="flex justify-between">
@@ -242,7 +317,6 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
               </div>
             </div>
 
-            {/* Payment Details */}
             <Separator />
             <div>
               <p><span className="text-muted-foreground">Payment Method:</span> {order.paymentMethod}</p>
@@ -269,11 +343,32 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
     <div className="min-h-screen bg-background">
       {selectedInvoice && renderInvoice(selectedInvoice)}
       
-      {/* Header */}
-      <div className="bg-primary text-primary-foreground py-6">
+      {/* Header with Navigation */}
+      <div className="bg-primary text-primary-foreground py-4 border-b border-primary-foreground/20">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
+              <button
+                onClick={() => setShowMobileMenu(!showMobileMenu)}
+                className="lg:hidden bg-primary-foreground/10 p-2 rounded-md hover:bg-primary-foreground/20"
+              >
+                <Menu className="h-5 w-5" />
+              </button>
+              
+              <div>
+                <h1 style={{ 
+                  fontFamily: 'var(--font-family-script)', 
+                  fontSize: 'var(--text-2xl)' 
+                }}>
+                  Radha Sarees
+                </h1>
+                <p className="text-primary-foreground/80 mt-1" style={{ fontSize: 'var(--text-sm)' }}>
+                  Customer Dashboard
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
               <Button
                 onClick={() => {
                   window.history.pushState({}, '', '/');
@@ -282,25 +377,90 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
                 className="bg-primary-foreground/10 text-primary-foreground hover:bg-primary-foreground/20"
               >
                 <Home className="mr-2 h-4 w-4" />
-                Back to Store
+                <span className="hidden sm:inline">Back to Store</span>
               </Button>
-              <div>
-                <h1>Welcome, {currentCustomer?.name}</h1>
-                <p className="text-primary-foreground/80 mt-1" style={{ fontSize: 'var(--text-sm)' }}>
-                  {currentCustomer?.email}
-                </p>
-              </div>
+              <Button 
+                onClick={onLogout} 
+                className="bg-primary-foreground text-primary hover:bg-primary-foreground/90"
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                <span className="hidden sm:inline">Logout</span>
+              </Button>
             </div>
-            <Button 
-              onClick={onLogout} 
-              className="bg-primary-foreground text-primary hover:bg-primary-foreground/90"
-            >
-              <LogOut className="mr-2 h-4 w-4" />
-              Logout
-            </Button>
+          </div>
+
+          {/* Welcome Message */}
+          <div className="mt-4">
+            <p style={{ fontSize: 'var(--text-lg)' }}>Welcome, {currentCustomer?.name}</p>
+            <p className="text-primary-foreground/70" style={{ fontSize: 'var(--text-sm)' }}>
+              {currentCustomer?.email}
+            </p>
           </div>
         </div>
       </div>
+
+      {/* Mobile Menu */}
+      {showMobileMenu && (
+        <div className="lg:hidden bg-card border-b border-border p-4">
+          <nav className="flex flex-col gap-2">
+            <Button
+              variant={activeTab === 'orders' ? 'default' : 'ghost'}
+              onClick={() => {
+                setActiveTab('orders');
+                setShowMobileMenu(false);
+              }}
+              className="justify-start"
+            >
+              <Package className="mr-2 h-4 w-4" />
+              Orders
+            </Button>
+            <Button
+              variant={activeTab === 'invoices' ? 'default' : 'ghost'}
+              onClick={() => {
+                setActiveTab('invoices');
+                setShowMobileMenu(false);
+              }}
+              className="justify-start"
+            >
+              <FileText className="mr-2 h-4 w-4" />
+              Invoices
+            </Button>
+            <Button
+              variant={activeTab === 'profile' ? 'default' : 'ghost'}
+              onClick={() => {
+                setActiveTab('profile');
+                setShowMobileMenu(false);
+              }}
+              className="justify-start"
+            >
+              <User className="mr-2 h-4 w-4" />
+              Profile
+            </Button>
+            <Button
+              variant={activeTab === 'payment' ? 'default' : 'ghost'}
+              onClick={() => {
+                setActiveTab('payment');
+                setShowMobileMenu(false);
+              }}
+              className="justify-start"
+            >
+              <CreditCard className="mr-2 h-4 w-4" />
+              Payment Methods
+            </Button>
+            <Button
+              variant={activeTab === 'billing' ? 'default' : 'ghost'}
+              onClick={() => {
+                setActiveTab('billing');
+                setShowMobileMenu(false);
+              }}
+              className="justify-start"
+            >
+              <MapPin className="mr-2 h-4 w-4" />
+              Billing Addresses
+            </Button>
+          </nav>
+        </div>
+      )}
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
@@ -583,26 +743,90 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
             <div className="flex justify-between items-center">
               <h2>Payment Methods</h2>
               <Button 
-                onClick={async () => {
-                  try {
-                    await syncedActions.addPaymentMethod({
-                      type: 'card',
-                      name: 'New Card',
-                      details: '**** **** **** 1234',
-                      isDefault: customerPaymentMethods.length === 0
-                    });
-                    toast.success("Payment method added");
-                  } catch (error) {
-                    console.error('Error adding payment method:', error);
-                  }
-                }}
+                onClick={() => setShowPaymentMethodForm(true)}
                 className="bg-primary text-primary-foreground"
               >
+                <Plus className="mr-2 h-4 w-4" />
                 Add Payment Method
               </Button>
             </div>
 
-            {customerPaymentMethods.length === 0 ? (
+            {showPaymentMethodForm && (
+              <Card className="p-6">
+                <h3 className="mb-4">Add New Payment Method</h3>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="payment-name">Cardholder Name *</Label>
+                    <Input
+                      id="payment-name"
+                      value={paymentMethodData.name}
+                      onChange={(e) => setPaymentMethodData({ ...paymentMethodData, name: e.target.value })}
+                      placeholder="John Doe"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="card-number">Card Number *</Label>
+                    <Input
+                      id="card-number"
+                      value={paymentMethodData.cardNumber}
+                      onChange={(e) => setPaymentMethodData({ ...paymentMethodData, cardNumber: e.target.value })}
+                      placeholder="1234 5678 9012 3456"
+                      maxLength={16}
+                      className="mt-1"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="expiry">Expiry Date</Label>
+                      <Input
+                        id="expiry"
+                        value={paymentMethodData.expiryDate}
+                        onChange={(e) => setPaymentMethodData({ ...paymentMethodData, expiryDate: e.target.value })}
+                        placeholder="MM/YY"
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="cvv">CVV</Label>
+                      <Input
+                        id="cvv"
+                        value={paymentMethodData.cvv}
+                        onChange={(e) => setPaymentMethodData({ ...paymentMethodData, cvv: e.target.value })}
+                        placeholder="123"
+                        maxLength={3}
+                        className="mt-1"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <Button 
+                      onClick={() => {
+                        setShowPaymentMethodForm(false);
+                        setPaymentMethodData({
+                          type: 'card',
+                          name: '',
+                          cardNumber: '',
+                          expiryDate: '',
+                          cvv: ''
+                        });
+                      }}
+                      className="flex-1 bg-secondary text-secondary-foreground"
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      onClick={handleAddPaymentMethod}
+                      className="flex-1 bg-primary text-primary-foreground"
+                    >
+                      Add Card
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            )}
+
+            {customerPaymentMethods.length === 0 && !showPaymentMethodForm ? (
               <Card className="p-8 text-center">
                 <CreditCard className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                 <p className="text-muted-foreground">No payment methods added</p>
@@ -664,29 +888,111 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
             <div className="flex justify-between items-center">
               <h2>Billing Addresses</h2>
               <Button 
-                onClick={async () => {
-                  try {
-                    await syncedActions.addBillingAddress({
-                      name: currentCustomer?.name || '',
-                      address: currentCustomer?.address || '',
-                      city: currentCustomer?.city || '',
-                      state: currentCustomer?.state || '',
-                      pincode: currentCustomer?.pincode || '',
-                      phone: currentCustomer?.phone || '',
-                      isDefault: customerBillingAddresses.length === 0
-                    });
-                    toast.success("Billing address added");
-                  } catch (error) {
-                    console.error('Error adding billing address:', error);
-                  }
-                }}
+                onClick={() => setShowBillingAddressForm(true)}
                 className="bg-primary text-primary-foreground"
               >
+                <Plus className="mr-2 h-4 w-4" />
                 Add Address
               </Button>
             </div>
 
-            {customerBillingAddresses.length === 0 ? (
+            {showBillingAddressForm && (
+              <Card className="p-6">
+                <h3 className="mb-4">Add New Billing Address</h3>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="billing-name">Full Name *</Label>
+                    <Input
+                      id="billing-name"
+                      value={billingAddressData.name}
+                      onChange={(e) => setBillingAddressData({ ...billingAddressData, name: e.target.value })}
+                      placeholder="John Doe"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="billing-address">Address *</Label>
+                    <Input
+                      id="billing-address"
+                      value={billingAddressData.address}
+                      onChange={(e) => setBillingAddressData({ ...billingAddressData, address: e.target.value })}
+                      placeholder="123 Main Street"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="billing-city">City *</Label>
+                      <Input
+                        id="billing-city"
+                        value={billingAddressData.city}
+                        onChange={(e) => setBillingAddressData({ ...billingAddressData, city: e.target.value })}
+                        placeholder="Mumbai"
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="billing-state">State</Label>
+                      <Input
+                        id="billing-state"
+                        value={billingAddressData.state}
+                        onChange={(e) => setBillingAddressData({ ...billingAddressData, state: e.target.value })}
+                        placeholder="Maharashtra"
+                        className="mt-1"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="billing-pincode">Pincode</Label>
+                      <Input
+                        id="billing-pincode"
+                        value={billingAddressData.pincode}
+                        onChange={(e) => setBillingAddressData({ ...billingAddressData, pincode: e.target.value })}
+                        placeholder="400001"
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="billing-phone">Phone</Label>
+                      <Input
+                        id="billing-phone"
+                        value={billingAddressData.phone}
+                        onChange={(e) => setBillingAddressData({ ...billingAddressData, phone: e.target.value })}
+                        placeholder="+91 98765 43210"
+                        className="mt-1"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <Button 
+                      onClick={() => {
+                        setShowBillingAddressForm(false);
+                        setBillingAddressData({
+                          name: '',
+                          address: '',
+                          city: '',
+                          state: '',
+                          pincode: '',
+                          phone: ''
+                        });
+                      }}
+                      className="flex-1 bg-secondary text-secondary-foreground"
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      onClick={handleAddBillingAddress}
+                      className="flex-1 bg-primary text-primary-foreground"
+                    >
+                      Add Address
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            )}
+
+            {customerBillingAddresses.length === 0 && !showBillingAddressForm ? (
               <Card className="p-8 text-center">
                 <MapPin className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                 <p className="text-muted-foreground">No billing addresses added</p>

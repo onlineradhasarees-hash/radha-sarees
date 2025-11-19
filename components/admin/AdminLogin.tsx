@@ -93,20 +93,14 @@ export function AdminLogin({ onLogin }: AdminLoginProps) {
               </Button>
             </form>
 
-            <div className="mt-6 p-4 rounded-lg bg-muted">
-              <p className="text-muted-foreground mb-2">Default Credentials:</p>
-              <div className="space-y-1">
-                <p className="text-foreground">Username: <span className="font-mono">admin</span></p>
-                <p className="text-foreground">Password: <span className="font-mono">admin123</span></p>
-              </div>
-              <p className="text-muted-foreground mt-2">
-                Change these credentials in production
-              </p>
-            </div>
-
             <div className="mt-4 text-center">
               <a 
-                href="#" 
+                href="/" 
+                onClick={(e) => {
+                  e.preventDefault();
+                  window.history.pushState({}, '', '/');
+                  window.location.reload();
+                }}
                 className="text-primary hover:underline"
               >
                 Back to Store

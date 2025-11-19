@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useStore } from "../lib/store";
+import { syncedActions } from "../lib/useData";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
@@ -38,7 +39,7 @@ export function Checkout({ isOpen, onClose, items, onCheckoutComplete }: Checkou
     setStep('payment');
   };
 
-  const handlePlaceOrder = () => {
+  const handlePlaceOrder = async () => {
     const orderItems = items.map(item => ({
       productId: item.id,
       productName: item.name,
@@ -47,32 +48,37 @@ export function Checkout({ isOpen, onClose, items, onCheckoutComplete }: Checkou
       image: item.image,
     }));
 
-    addOrder({
-      customerName: formData.customerName,
-      customerEmail: formData.customerEmail,
-      customerPhone: formData.customerPhone,
-      shippingAddress: formData.shippingAddress,
-      items: orderItems,
-      totalAmount,
-      status: 'pending',
-      paymentMethod: paymentMethod === 'cod' ? 'Cash on Delivery' 
-        : paymentMethod === 'razorpay' ? 'Razorpay' 
-        : 'PhonePe',
-      paymentStatus: paymentMethod === 'cod' ? 'pending' : 'completed',
-    });
-
-    setStep('success');
-    setTimeout(() => {
-      onCheckoutComplete();
-      onClose();
-      setStep('details');
-      setFormData({
-        customerName: '',
-        customerEmail: '',
-        customerPhone: '',
-        shippingAddress: '',
+    try {
+      await syncedActions.addOrder({
+        customerName: formData.customerName,
+        customerEmail: formData.customerEmail,
+        customerPhone: formData.customerPhone,
+        shippingAddress: formData.shippingAddress,
+        items: orderItems,
+        totalAmount,
+        status: 'pending',
+        paymentMethod: paymentMethod === 'cod' ? 'Cash on Delivery' 
+          : paymentMethod === 'razorpay' ? 'Razorpay' 
+          : 'PhonePe',
+        paymentStatus: paymentMethod === 'cod' ? 'pending' : 'completed',
       });
-    }, 3000);
+
+      setStep('success');
+      setTimeout(() => {
+        onCheckoutComplete();
+        onClose();
+        setStep('details');
+        setFormData({
+          customerName: '',
+          customerEmail: '',
+          customerPhone: '',
+          shippingAddress: '',
+        });
+      }, 3000);
+    } catch (error) {
+      console.error('Order placement error:', error);
+      toast.error('Failed to place order. Please try again.');
+    }
   };
 
   return (
