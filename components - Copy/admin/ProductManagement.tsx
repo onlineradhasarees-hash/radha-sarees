@@ -249,27 +249,10 @@ export function ProductManagement() {
           
           if (header === 'price' || header === 'originalprice' || header === 'stock' || header === 'rating' || header === 'reviews') {
             product[header] = Number(value) || 0;
-          } else if (header === 'instock' || header === 'hasvariations') {
+          } else if (header === 'instock') {
             product[header] = value.toLowerCase() === 'true' || value === '1';
           } else if (header === 'tags') {
             product[header] = value ? value.split(';').map(t => t.trim()) : [];
-          } else if (header === 'variations') {
-            // Parse color variations: color:stock:priceAdjustment:imageURL|color:stock:priceAdjustment:imageURL
-            if (value && value.trim()) {
-              const variationStrings = value.split('|');
-              product[header] = variationStrings.map((varStr, idx) => {
-                const parts = varStr.split(':');
-                return {
-                  id: `${Date.now()}-${idx}`,
-                  color: parts[0] || '',
-                  stock: Number(parts[1]) || 0,
-                  priceAdjustment: Number(parts[2]) || 0,
-                  image: parts[3] || ''
-                };
-              }).filter(v => v.color); // Only include variations with a color name
-            } else {
-              product[header] = [];
-            }
           } else {
             product[header] = value || '';
           }
@@ -344,32 +327,21 @@ export function ProductManagement() {
   };
 
   const handleExportCSV = () => {
-    const headers = ["name", "category", "price", "originalPrice", "stock", "weight", "image", "description", "tags", "rating", "reviews", "inStock", "hasVariations", "variations"];
-    const rows = filteredProducts.map(p => {
-      // Format variations as color:stock:priceAdjustment:imageURL|color:stock:priceAdjustment:imageURL
-      const variationsStr = (p as any).hasVariations && (p as any).variations 
-        ? (p as any).variations.map((v: any) => 
-            `${v.color}:${v.stock}:${v.priceAdjustment || 0}:${v.image || ''}`
-          ).join('|')
-        : '';
-      
-      return [
-        p.name,
-        p.category,
-        p.price,
-        (p as any).originalPrice || p.price,
-        p.stock || 0,
-        (p as any).weight || "",
-        p.image,
-        p.description || "",
-        (p.tags || []).join(';'),
-        (p as any).rating || 5,
-        (p as any).reviews || 0,
-        (p as any).inStock !== false ? 'true' : 'false',
-        (p as any).hasVariations ? 'true' : 'false',
-        variationsStr,
-      ];
-    });
+    const headers = ["name", "category", "price", "originalPrice", "stock", "weight", "image", "description", "tags", "rating", "reviews", "inStock"];
+    const rows = filteredProducts.map(p => [
+      p.name,
+      p.category,
+      p.price,
+      (p as any).originalPrice || p.price,
+      p.stock || 0,
+      (p as any).weight || "",
+      p.image,
+      p.description || "",
+      (p.tags || []).join(';'),
+      (p as any).rating || 5,
+      (p as any).reviews || 0,
+      (p as any).inStock !== false ? 'true' : 'false',
+    ]);
 
     const csv = [
       headers.join(','),
@@ -387,10 +359,10 @@ export function ProductManagement() {
   };
 
   const downloadSampleCSV = () => {
-    const sampleCSV = `name,category,price,originalPrice,stock,weight,image,description,tags,rating,reviews,inStock,hasVariations,variations
-"Royal Silk Saree","Wedding",15999,19999,10,"Pure Silk","https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=400","Beautiful silk saree perfect for weddings","featured;new;bestseller",5,128,true,false,""
-"Designer Saree with Colors","Ethnic",12999,16999,0,"Georgette","https://images.unsplash.com/photo-1583391733981-0b46bbf14a37?w=400","Elegant designer saree for special occasions - Available in multiple colors","featured;designer",4.5,95,true,true,"Red:10:0:|Blue:15:200:|Golden:8:500:"
-"Cotton Saree","Casuals",5999,7999,20,"Cotton","https://images.unsplash.com/photo-1624206112918-f140f087f9db?w=400","Comfortable cotton saree for daily wear","new;casual",4.8,210,true,false,""`;
+    const sampleCSV = `name,category,price,originalPrice,stock,weight,image,description,tags,rating,reviews,inStock
+"Royal Silk Saree","Wedding",15999,19999,10,"Pure Silk","https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=400","Beautiful silk saree perfect for weddings","featured;new;bestseller",5,128,true
+"Designer Saree","Ethnic",12999,16999,15,"Georgette","https://images.unsplash.com/photo-1583391733981-0b46bbf14a37?w=400","Elegant designer saree for special occasions","featured;designer",4.5,95,true
+"Cotton Saree","Casuals",5999,7999,20,"Cotton","https://images.unsplash.com/photo-1624206112918-f140f087f9db?w=400","Comfortable cotton saree for daily wear","new;casual",4.8,210,true`;
 
     const blob = new Blob([sampleCSV], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
@@ -540,7 +512,7 @@ export function ProductManagement() {
                   <Label>CSV Format (Required Columns)</Label>
                   <div className="p-3 bg-muted rounded-md text-xs text-muted-foreground overflow-x-auto">
                     <code>
-                      name,category,price,originalPrice,stock,weight,image,description,tags,rating,reviews,inStock,hasVariations,variations
+                      name,category,price,originalPrice,stock,weight,image,description,tags,rating,reviews,inStock
                     </code>
                   </div>
                   <p className="text-xs text-muted-foreground mt-2">
@@ -549,42 +521,7 @@ export function ProductManagement() {
                     • inStock should be "true" or "false"
                     <br />
                     • All text values should be in quotes
-                    <br />
-                    • <strong>hasVariations</strong> should be "true" or "false"
-                    <br />
-                    • <strong>variations</strong> format: color:stock:priceAdjustment:imageURL|color:stock:priceAdjustment:imageURL
-                    <br />
-                    • Example variations: "Red:10:0:|Blue:15:200:https://...|Golden:5:500:"
-                    <br />
-                    • Leave priceAdjustment and imageURL empty if not needed (e.g., "Red:10::")
                   </p>
-                </div>
-
-                {/* Color Variations Example */}
-                <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg space-y-2">
-                  <div className="flex items-center gap-2">
-                    <div className="h-6 w-6 rounded-full bg-primary/20 flex items-center justify-center text-primary">
-                      ℹ️
-                    </div>
-                    <Label className="text-foreground">Color Variations Guide</Label>
-                  </div>
-                  <div className="text-xs text-muted-foreground space-y-2">
-                    <p><strong>For products WITHOUT color variations:</strong></p>
-                    <code className="block p-2 bg-background rounded text-[10px]">
-                      hasVariations: false, variations: ""
-                    </code>
-                    <p className="mt-2"><strong>For products WITH color variations:</strong></p>
-                    <code className="block p-2 bg-background rounded text-[10px]">
-                      hasVariations: true, variations: "Red:10:0:|Blue:15:200:|Golden:8:500:"
-                    </code>
-                    <p className="text-muted-foreground/80 mt-2">
-                      • Each variation separated by pipe (|)
-                      <br />
-                      • Format: ColorName:Stock:PriceAdjustment:ImageURL
-                      <br />
-                      • Stock must be added to variations, not main stock field
-                    </p>
-                  </div>
                 </div>
 
                 {/* Manual Paste Option */}
