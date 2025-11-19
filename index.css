@@ -749,6 +749,10 @@
     margin-left: calc(var(--spacing) * 6);
   }
 
+  .ml-8 {
+    margin-left: calc(var(--spacing) * 8);
+  }
+
   .ml-64 {
     margin-left: calc(var(--spacing) * 64);
   }
@@ -1466,6 +1470,16 @@
 
   .bg-background {
     background-color: var(--background);
+  }
+
+  .bg-background\/50 {
+    background-color: var(--background);
+  }
+
+  @supports (color: color-mix(in lab, red, red)) {
+    .bg-background\/50 {
+      background-color: color-mix(in oklab, var(--background) 50%, transparent);
+    }
   }
 
   .bg-background\/95 {

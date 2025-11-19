@@ -48,6 +48,14 @@ interface ProductFormData {
   rating: number;
   reviews: number;
   inStock: boolean;
+  hasVariations: boolean;
+  variations: Array<{
+    id: string;
+    color: string;
+    stock: number;
+    priceAdjustment: number;
+    image: string;
+  }>;
 }
 
 export function ProductManagement() {
@@ -83,6 +91,8 @@ export function ProductManagement() {
     rating: 5,
     reviews: 0,
     inStock: true,
+    hasVariations: false,
+    variations: [],
   });
 
   const categories = ["Wedding", "Ethnic", "Casuals", "Festival", "New Arrivals", "Celebrity"];
@@ -105,6 +115,8 @@ export function ProductManagement() {
       rating: formData.rating,
       reviews: formData.reviews,
       inStock: formData.inStock,
+      hasVariations: formData.hasVariations,
+      variations: formData.variations,
     } as any);
 
     if (success) {
@@ -134,6 +146,8 @@ export function ProductManagement() {
       rating: formData.rating,
       reviews: formData.reviews,
       inStock: formData.inStock,
+      hasVariations: formData.hasVariations,
+      variations: formData.variations,
     } as any);
 
     if (success) {
@@ -374,6 +388,8 @@ export function ProductManagement() {
       rating: 5,
       reviews: 0,
       inStock: true,
+      hasVariations: false,
+      variations: [],
     });
   };
 
@@ -392,6 +408,8 @@ export function ProductManagement() {
       rating: product.rating || 5,
       reviews: product.reviews || 0,
       inStock: product.inStock !== false,
+      hasVariations: product.hasVariations || false,
+      variations: product.variations || [],
     });
     setIsEditDialogOpen(true);
   };
@@ -697,6 +715,146 @@ export function ProductManagement() {
                     checked={formData.inStock}
                     onCheckedChange={(checked) => setFormData({ ...formData, inStock: checked })}
                   />
+                </div>
+
+                {/* Color Variations Section */}
+                <div className="border border-border rounded-lg p-4 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label>Color Variations</Label>
+                      <p className="text-muted-foreground text-sm">Add multiple color options for this product</p>
+                    </div>
+                    <Switch
+                      checked={formData.hasVariations}
+                      onCheckedChange={(checked) => {
+                        setFormData({ ...formData, hasVariations: checked });
+                        if (checked && formData.variations.length === 0) {
+                          // Add first variation by default
+                          setFormData({ 
+                            ...formData, 
+                            hasVariations: checked,
+                            variations: [{
+                              id: Date.now().toString(),
+                              color: '',
+                              stock: 0,
+                              priceAdjustment: 0,
+                              image: ''
+                            }]
+                          });
+                        }
+                      }}
+                    />
+                  </div>
+
+                  {formData.hasVariations && (
+                    <div className="space-y-3">
+                      {formData.variations.map((variation, index) => (
+                        <div key={variation.id} className="p-3 bg-background border border-border rounded-lg space-y-3">
+                          <div className="flex items-center justify-between">
+                            <Label className="text-sm">Color Variation {index + 1}</Label>
+                            {formData.variations.length > 1 && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  const newVariations = formData.variations.filter((_, i) => i !== index);
+                                  setFormData({ ...formData, variations: newVariations });
+                                }}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <Label className="text-xs">Color Name *</Label>
+                              <Input
+                                placeholder="e.g., Red, Blue, Golden"
+                                value={variation.color}
+                                onChange={(e) => {
+                                  const newVariations = [...formData.variations];
+                                  newVariations[index].color = e.target.value;
+                                  setFormData({ ...formData, variations: newVariations });
+                                }}
+                                required={formData.hasVariations}
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-xs">Stock *</Label>
+                              <Input
+                                type="number"
+                                placeholder="10"
+                                value={variation.stock}
+                                onChange={(e) => {
+                                  const newVariations = [...formData.variations];
+                                  newVariations[index].stock = Number(e.target.value);
+                                  setFormData({ ...formData, variations: newVariations });
+                                }}
+                                required={formData.hasVariations}
+                              />
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <Label className="text-xs">Price Adjustment (₹)</Label>
+                              <Input
+                                type="number"
+                                placeholder="0"
+                                value={variation.priceAdjustment}
+                                onChange={(e) => {
+                                  const newVariations = [...formData.variations];
+                                  newVariations[index].priceAdjustment = Number(e.target.value);
+                                  setFormData({ ...formData, variations: newVariations });
+                                }}
+                              />
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Extra charge for this color (+/-)
+                              </p>
+                            </div>
+                            <div>
+                              <Label className="text-xs">Image URL (Optional)</Label>
+                              <Input
+                                placeholder="https://..."
+                                value={variation.image}
+                                onChange={(e) => {
+                                  const newVariations = [...formData.variations];
+                                  newVariations[index].image = e.target.value;
+                                  setFormData({ ...formData, variations: newVariations });
+                                }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setFormData({
+                            ...formData,
+                            variations: [
+                              ...formData.variations,
+                              {
+                                id: Date.now().toString(),
+                                color: '',
+                                stock: 0,
+                                priceAdjustment: 0,
+                                image: ''
+                              }
+                            ]
+                          });
+                        }}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Another Color
+                      </Button>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex gap-2 pt-4">
@@ -1109,6 +1267,146 @@ export function ProductManagement() {
                 checked={formData.inStock}
                 onCheckedChange={(checked) => setFormData({ ...formData, inStock: checked })}
               />
+            </div>
+
+            {/* Color Variations Section */}
+            <div className="border border-border rounded-lg p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label>Color Variations</Label>
+                  <p className="text-muted-foreground text-sm">Add multiple color options for this product</p>
+                </div>
+                <Switch
+                  checked={formData.hasVariations}
+                  onCheckedChange={(checked) => {
+                    setFormData({ ...formData, hasVariations: checked });
+                    if (checked && formData.variations.length === 0) {
+                      // Add first variation by default
+                      setFormData({ 
+                        ...formData, 
+                        hasVariations: checked,
+                        variations: [{
+                          id: Date.now().toString(),
+                          color: '',
+                          stock: 0,
+                          priceAdjustment: 0,
+                          image: ''
+                        }]
+                      });
+                    }
+                  }}
+                />
+              </div>
+
+              {formData.hasVariations && (
+                <div className="space-y-3">
+                  {formData.variations.map((variation, index) => (
+                    <div key={variation.id} className="p-3 bg-background border border-border rounded-lg space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-sm">Color Variation {index + 1}</Label>
+                        {formData.variations.length > 1 && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              const newVariations = formData.variations.filter((_, i) => i !== index);
+                              setFormData({ ...formData, variations: newVariations });
+                            }}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label className="text-xs">Color Name *</Label>
+                          <Input
+                            placeholder="e.g., Red, Blue, Golden"
+                            value={variation.color}
+                            onChange={(e) => {
+                              const newVariations = [...formData.variations];
+                              newVariations[index].color = e.target.value;
+                              setFormData({ ...formData, variations: newVariations });
+                            }}
+                            required={formData.hasVariations}
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Stock *</Label>
+                          <Input
+                            type="number"
+                            placeholder="10"
+                            value={variation.stock}
+                            onChange={(e) => {
+                              const newVariations = [...formData.variations];
+                              newVariations[index].stock = Number(e.target.value);
+                              setFormData({ ...formData, variations: newVariations });
+                            }}
+                            required={formData.hasVariations}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label className="text-xs">Price Adjustment (₹)</Label>
+                          <Input
+                            type="number"
+                            placeholder="0"
+                            value={variation.priceAdjustment}
+                            onChange={(e) => {
+                              const newVariations = [...formData.variations];
+                              newVariations[index].priceAdjustment = Number(e.target.value);
+                              setFormData({ ...formData, variations: newVariations });
+                            }}
+                          />
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Extra charge for this color (+/-)
+                          </p>
+                        </div>
+                        <div>
+                          <Label className="text-xs">Image URL (Optional)</Label>
+                          <Input
+                            placeholder="https://..."
+                            value={variation.image}
+                            onChange={(e) => {
+                              const newVariations = [...formData.variations];
+                              newVariations[index].image = e.target.value;
+                              setFormData({ ...formData, variations: newVariations });
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setFormData({
+                        ...formData,
+                        variations: [
+                          ...formData.variations,
+                          {
+                            id: Date.now().toString(),
+                            color: '',
+                            stock: 0,
+                            priceAdjustment: 0,
+                            image: ''
+                          }
+                        ]
+                      });
+                    }}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Another Color
+                  </Button>
+                </div>
+              )}
             </div>
 
             <div className="flex gap-2 pt-4">

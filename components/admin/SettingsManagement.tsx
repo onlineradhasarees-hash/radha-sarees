@@ -565,25 +565,37 @@ export function SettingsManagement() {
                     <strong>📱 SMS-Gate.app Setup Guide:</strong>
                   </p>
                   <ol className="list-decimal list-inside space-y-2 text-muted-foreground">
-                    <li>Install SMS-Gate.app on your Android device from Play Store</li>
-                    <li>Open the app and create an account</li>
-                    <li>Copy your API URL from the app (e.g., https://sms-gate.app/3rdparty/v1/message)</li>
-                    <li>Copy your Bearer Token from app settings</li>
-                    <li>Paste the URL in "Webhook URL" field below</li>
-                    <li>Paste the token in "API Key" field below</li>
-                    <li>Enter your Android phone number (with country code) in "Device Phone Number"</li>
+                    <li>Install <strong>SMS-Gate.app</strong> on your Android device from Play Store</li>
+                    <li>Open the app and go to <strong>Settings</strong> tab</li>
+                    <li>Find your <strong>API URL</strong> (e.g., https://sms-gate.app/3rdparty/v1/message)</li>
+                    <li>Note your <strong>Username</strong> and <strong>Password</strong></li>
+                    <li>Fill the fields below:
+                      <ul className="list-disc ml-8 mt-1 space-y-1">
+                        <li><strong>Webhook URL</strong> = Your API URL from the app</li>
+                        <li><strong>API Key</strong> = Your Username</li>
+                        <li><strong>API Secret</strong> = Your Password</li>
+                        <li><strong>Device Phone Number</strong> = Your Android phone number with country code</li>
+                      </ul>
+                    </li>
                   </ol>
-                  <p className="text-muted-foreground">
-                    💡 <strong>Pro tip:</strong> SMS-Gate.app is cost-effective as it uses your mobile plan. Keep your phone charged and connected to internet!
-                  </p>
+                  <div className="p-3 rounded-lg bg-background/50 border border-border">
+                    <p className="text-muted-foreground">
+                      💡 <strong>Pro tips:</strong>
+                    </p>
+                    <ul className="list-disc list-inside text-muted-foreground mt-1 space-y-1">
+                      <li>If your PrivateToken is empty, use Username/Password authentication</li>
+                      <li>Keep your phone charged and connected to internet</li>
+                      <li>Cost-effective - uses your mobile plan rates!</li>
+                    </ul>
+                  </div>
                 </div>
               )}
 
               <div>
-                <Label>API Key</Label>
+                <Label>API Key {notificationSettings.provider === 'custom' && <span className="text-muted-foreground">(Username for SMS-Gate.app)</span>}</Label>
                 <Input
                   type="text"
-                  placeholder="API Key"
+                  placeholder={notificationSettings.provider === 'custom' ? 'Username' : 'API Key'}
                   value={notificationSettings.apiKey}
                   onChange={(e) =>
                     setNotificationSettings({ ...notificationSettings, apiKey: e.target.value })
@@ -591,10 +603,10 @@ export function SettingsManagement() {
                 />
               </div>
               <div>
-                <Label>API Secret</Label>
+                <Label>API Secret {notificationSettings.provider === 'custom' && <span className="text-muted-foreground">(Password for SMS-Gate.app)</span>}</Label>
                 <Input
                   type="password"
-                  placeholder="API Secret"
+                  placeholder={notificationSettings.provider === 'custom' ? 'Password' : 'API Secret'}
                   value={notificationSettings.apiSecret}
                   onChange={(e) =>
                     setNotificationSettings({ ...notificationSettings, apiSecret: e.target.value })

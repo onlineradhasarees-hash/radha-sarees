@@ -166,15 +166,28 @@ async function sendViaCustomWebhook(
   phone: string,
   message: string,
   webhookUrl: string,
-  apiKey: string
+  apiKey: string,
+  apiSecret?: string
 ): Promise<boolean> {
   try {
+    // Prepare headers
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+
+    // SMS-Gate.app supports both Basic Auth (username/password) and Bearer token
+    if (apiSecret) {
+      // Basic Authentication (username = apiKey, password = apiSecret)
+      const credentials = btoa(`${apiKey}:${apiSecret}`);
+      headers['Authorization'] = `Basic ${credentials}`;
+    } else if (apiKey) {
+      // Bearer token authentication
+      headers['Authorization'] = `Bearer ${apiKey}`;
+    }
+
     const response = await fetch(webhookUrl, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-      },
+      headers: headers,
       body: JSON.stringify({
         phone: phone, // Generic field for other webhook providers
         phoneNumber: phone, // For SMS-Gate.app compatibility
@@ -256,7 +269,7 @@ export async function sendNotification(
     if (provider === 'twilio') {
       return await sendWhatsAppViaTwilio(phone, message, apiKey, apiSecret, senderId);
     } else if (provider === 'custom') {
-      return await sendViaCustomWebhook(phone, message, webhookUrl, apiKey);
+      return await sendViaCustomWebhook(phone, message, webhookUrl, apiKey, apiSecret);
     } else {
       console.log('WhatsApp not supported with selected provider');
       return false;
@@ -270,7 +283,7 @@ export async function sendNotification(
       case 'textlocal':
         return await sendViaTextlocal(phone, message, apiKey, senderId);
       case 'custom':
-        return await sendViaCustomWebhook(phone, message, webhookUrl, apiKey);
+        return await sendViaCustomWebhook(phone, message, webhookUrl, apiKey, apiSecret);
       default:
         console.error('Unknown SMS provider:', provider);
         return false;
