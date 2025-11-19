@@ -106,6 +106,7 @@
     --radius-xs: .125rem;
     --drop-shadow-lg: 0 4px 4px #00000026;
     --ease-in-out: cubic-bezier(.4, 0, .2, 1);
+    --animate-spin: spin 1s linear infinite;
     --blur-3xl: 64px;
     --default-transition-duration: .15s;
     --default-transition-timing-function: cubic-bezier(.4, 0, .2, 1);
@@ -1065,6 +1066,10 @@
 
   .transform {
     transform: var(--tw-rotate-x) var(--tw-rotate-y) var(--tw-rotate-z) var(--tw-skew-x) var(--tw-skew-y);
+  }
+
+  .animate-spin {
+    animation: var(--animate-spin);
   }
 
   .cursor-default {
@@ -3786,6 +3791,12 @@ html {
   syntax: "*";
   inherits: false;
   initial-value: 1;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes enter {

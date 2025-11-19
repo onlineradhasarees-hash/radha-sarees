@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useStore } from "../../lib/store";
+import { api } from "../../lib/api";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
@@ -25,6 +26,20 @@ export function SettingsManagement() {
     secretKey: paymentGateways.find(g => g.id === 'phonepe')?.secretKey || '',
   });
 
+  const [storeSettings, setStoreSettings] = useState({
+    storeName: 'Radha Sarees',
+    contactEmail: 'info@radhasarees.com',
+    contactPhone: '+91 98765 43210',
+    storeAddress: '123 Silk Street, Chennai, Tamil Nadu, India',
+  });
+
+  const [shippingSettings, setShippingSettings] = useState({
+    freeShipping: true,
+    minimumOrderForFreeShipping: 999,
+    standardShippingCharge: 0,
+    estimatedDeliveryTime: '5-7 business days',
+  });
+
   const handleSaveRazorpay = () => {
     updatePaymentGateway('razorpay', {
       enabled: razorpaySettings.enabled,
@@ -41,6 +56,26 @@ export function SettingsManagement() {
       secretKey: phonePeSettings.secretKey,
     });
     toast.success("PhonePe settings saved!");
+  };
+
+  const handleSaveStoreSettings = async () => {
+    try {
+      await api.updateStoreSettings(storeSettings);
+      toast.success("Store settings saved successfully!");
+    } catch (error) {
+      console.error('Error saving store settings:', error);
+      toast.error("Failed to save store settings");
+    }
+  };
+
+  const handleSaveShippingSettings = async () => {
+    try {
+      await api.updateShippingSettings(shippingSettings);
+      toast.success("Shipping settings saved successfully!");
+    } catch (error) {
+      console.error('Error saving shipping settings:', error);
+      toast.error("Failed to save shipping settings");
+    }
   };
 
   return (
@@ -239,21 +274,47 @@ export function SettingsManagement() {
             <CardContent className="space-y-4">
               <div>
                 <Label>Store Name</Label>
-                <Input defaultValue="Radha Sarees" />
+                <Input
+                  defaultValue="Radha Sarees"
+                  value={storeSettings.storeName}
+                  onChange={(e) =>
+                    setStoreSettings({ ...storeSettings, storeName: e.target.value })
+                  }
+                />
               </div>
               <div>
                 <Label>Contact Email</Label>
-                <Input type="email" defaultValue="info@radhasarees.com" />
+                <Input
+                  type="email"
+                  defaultValue="info@radhasarees.com"
+                  value={storeSettings.contactEmail}
+                  onChange={(e) =>
+                    setStoreSettings({ ...storeSettings, contactEmail: e.target.value })
+                  }
+                />
               </div>
               <div>
                 <Label>Contact Phone</Label>
-                <Input type="tel" defaultValue="+91 98765 43210" />
+                <Input
+                  type="tel"
+                  defaultValue="+91 98765 43210"
+                  value={storeSettings.contactPhone}
+                  onChange={(e) =>
+                    setStoreSettings({ ...storeSettings, contactPhone: e.target.value })
+                  }
+                />
               </div>
               <div>
                 <Label>Store Address</Label>
-                <Input defaultValue="123 Silk Street, Chennai, Tamil Nadu, India" />
+                <Input
+                  defaultValue="123 Silk Street, Chennai, Tamil Nadu, India"
+                  value={storeSettings.storeAddress}
+                  onChange={(e) =>
+                    setStoreSettings({ ...storeSettings, storeAddress: e.target.value })
+                  }
+                />
               </div>
-              <Button className="w-full">
+              <Button onClick={handleSaveStoreSettings} className="w-full">
                 <Save className="h-4 w-4 mr-2" />
                 Save Store Settings
               </Button>
@@ -275,21 +336,52 @@ export function SettingsManagement() {
                     Offer free shipping on all orders
                   </p>
                 </div>
-                <Switch defaultChecked />
+                <Switch
+                  defaultChecked={shippingSettings.freeShipping}
+                  onCheckedChange={(checked) =>
+                    setShippingSettings({ ...shippingSettings, freeShipping: checked })
+                  }
+                />
               </div>
               <div>
                 <Label>Minimum Order for Free Shipping (₹)</Label>
-                <Input type="number" defaultValue="999" />
+                <Input
+                  type="number"
+                  defaultValue="999"
+                  value={shippingSettings.minimumOrderForFreeShipping}
+                  onChange={(e) =>
+                    setShippingSettings({
+                      ...shippingSettings,
+                      minimumOrderForFreeShipping: parseInt(e.target.value, 10),
+                    })
+                  }
+                />
               </div>
               <div>
                 <Label>Standard Shipping Charge (₹)</Label>
-                <Input type="number" defaultValue="0" />
+                <Input
+                  type="number"
+                  defaultValue="0"
+                  value={shippingSettings.standardShippingCharge}
+                  onChange={(e) =>
+                    setShippingSettings({
+                      ...shippingSettings,
+                      standardShippingCharge: parseInt(e.target.value, 10),
+                    })
+                  }
+                />
               </div>
               <div>
                 <Label>Estimated Delivery Time (days)</Label>
-                <Input defaultValue="5-7 business days" />
+                <Input
+                  defaultValue="5-7 business days"
+                  value={shippingSettings.estimatedDeliveryTime}
+                  onChange={(e) =>
+                    setShippingSettings({ ...shippingSettings, estimatedDeliveryTime: e.target.value })
+                  }
+                />
               </div>
-              <Button className="w-full">
+              <Button onClick={handleSaveShippingSettings} className="w-full">
                 <Save className="h-4 w-4 mr-2" />
                 Save Shipping Settings
               </Button>

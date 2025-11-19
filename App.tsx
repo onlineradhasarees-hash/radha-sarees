@@ -53,22 +53,23 @@ export default function App() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
 
-  // Handle URL hash for routing
+  // Handle URL routing (SEO-friendly)
   useEffect(() => {
-    const handleHashChange = () => {
-      const hash = window.location.hash;
-      if (hash === '#admin') {
+    const handleRouteChange = () => {
+      const path = window.location.pathname;
+      
+      if (path === '/admin') {
         setView('admin');
-      } else if (hash === '#customer-dashboard') {
+      } else if (path === '/customer-dashboard') {
         setView('customer-dashboard');
-      } else if (hash.startsWith('#product/')) {
-        const productId = parseInt(hash.replace('#product/', ''));
+      } else if (path.startsWith('/product/')) {
+        const productId = parseInt(path.replace('/product/', ''));
         if (!isNaN(productId)) {
           setSelectedProductId(productId);
           setView('product');
         }
-      } else if (hash.startsWith('#category/')) {
-        const category = decodeURIComponent(hash.replace('#category/', ''));
+      } else if (path.startsWith('/category/')) {
+        const category = decodeURIComponent(path.replace('/category/', ''));
         setSelectedCategoryForPage(category);
         setView('category');
       } else {
@@ -78,9 +79,9 @@ export default function App() {
       }
     };
 
-    handleHashChange();
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
+    handleRouteChange();
+    window.addEventListener('popstate', handleRouteChange);
+    return () => window.removeEventListener('popstate', handleRouteChange);
   }, []);
 
   // Filter products based on search and category
@@ -172,17 +173,24 @@ export default function App() {
   };
 
   const handleCategoryPageSelect = (categoryName: string) => {
-    window.location.hash = `#category/${encodeURIComponent(categoryName)}`;
+    window.history.pushState({}, '', `/category/${encodeURIComponent(categoryName)}`);
+    setSelectedCategoryForPage(categoryName);
+    setView('category');
     window.scrollTo(0, 0);
   };
 
   const handleProductClick = (productId: number) => {
-    window.location.hash = `#product/${productId}`;
+    window.history.pushState({}, '', `/product/${productId}`);
+    setSelectedProductId(productId);
+    setView('product');
     window.scrollTo(0, 0);
   };
 
   const handleBackToHome = () => {
-    window.location.hash = '';
+    window.history.pushState({}, '', '/');
+    setView('store');
+    setSelectedProductId(null);
+    setSelectedCategoryForPage(null);
     window.scrollTo(0, 0);
   };
 
@@ -214,7 +222,7 @@ export default function App() {
 
   const handleAccountClick = () => {
     if (isCustomerAuthenticated) {
-      window.location.hash = '#customer-dashboard';
+      window.history.pushState({}, '', '/customer-dashboard');
       setView('customer-dashboard');
     } else {
       setShowAuthModal(true);
@@ -227,7 +235,7 @@ export default function App() {
     console.log('Login result:', success);
     if (success) {
       setShowAuthModal(false);
-      window.location.hash = '#customer-dashboard';
+      window.history.pushState({}, '', '/customer-dashboard');
       setView('customer-dashboard');
     }
   };
@@ -239,7 +247,7 @@ export default function App() {
     console.log('Signup result:', success);
     if (success) {
       setShowAuthModal(false);
-      window.location.hash = '#customer-dashboard';
+      window.history.pushState({}, '', '/customer-dashboard');
       setView('customer-dashboard');
     }
   };
@@ -252,7 +260,7 @@ export default function App() {
     syncedActions.customerLogout();
     
     toast.success("Logged out successfully");
-    window.location.hash = '';
+    window.history.pushState({}, '', '/');
     setView('store');
   };
 

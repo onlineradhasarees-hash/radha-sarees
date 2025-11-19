@@ -17,7 +17,8 @@ import {
   LogOut,
   Download,
   Eye,
-  Home
+  Home,
+  Loader2
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -44,6 +45,31 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
   const [editingProfile, setEditingProfile] = useState(false);
   const [profileData, setProfileData] = useState(currentCustomer);
   const [selectedInvoice, setSelectedInvoice] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Check if customer data is loaded
+  useState(() => {
+    // Give a small timeout to allow data to sync
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 500);
+    return () => clearTimeout(timer);
+  });
+
+  // If still loading, show loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="p-8 text-center max-w-md">
+          <Loader2 className="h-16 w-16 mx-auto text-primary mb-4 animate-spin" />
+          <h2 className="mb-2">Loading Dashboard</h2>
+          <p className="text-muted-foreground">
+            Please wait while we load your account...
+          </p>
+        </Card>
+      </div>
+    );
+  }
 
   // If no customer is logged in, show error state
   if (!currentCustomer) {
@@ -57,7 +83,7 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
           </p>
           <Button 
             onClick={() => {
-              window.location.hash = '';
+              window.history.pushState({}, '', '/');
               window.location.reload();
             }}
             className="bg-primary text-primary-foreground"
@@ -237,7 +263,7 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
             <div className="flex items-center gap-4">
               <Button
                 onClick={() => {
-                  window.location.hash = '';
+                  window.history.pushState({}, '', '/');
                   window.location.reload();
                 }}
                 className="bg-primary-foreground/10 text-primary-foreground hover:bg-primary-foreground/20"

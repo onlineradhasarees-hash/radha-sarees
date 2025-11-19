@@ -640,6 +640,70 @@ app.put("/make-server-226dc7f7/settings/site", async (c) => {
   }
 });
 
+// Get store settings
+app.get("/make-server-226dc7f7/settings/store", async (c) => {
+  try {
+    const settings = await kv.get('settings:store') || {
+      storeName: 'Radha Sarees',
+      contactEmail: 'info@radhasarees.com',
+      contactPhone: '+91 98765 43210',
+      storeAddress: '123 Silk Street, Chennai, Tamil Nadu, India',
+    };
+    return c.json({ settings });
+  } catch (error) {
+    console.log('Get store settings error:', error);
+    return c.json({ error: 'Internal server error' }, 500);
+  }
+});
+
+// Update store settings
+app.put("/make-server-226dc7f7/settings/store", async (c) => {
+  try {
+    const updates = await c.req.json();
+    const existing = await kv.get('settings:store') || {};
+    
+    const updated = { ...existing, ...updates };
+    await kv.set('settings:store', updated);
+    
+    return c.json({ success: true, settings: updated });
+  } catch (error) {
+    console.log('Update store settings error:', error);
+    return c.json({ error: 'Internal server error' }, 500);
+  }
+});
+
+// Get shipping settings
+app.get("/make-server-226dc7f7/settings/shipping", async (c) => {
+  try {
+    const settings = await kv.get('settings:shipping') || {
+      freeShipping: true,
+      minimumOrderForFreeShipping: 999,
+      standardShippingCharge: 0,
+      estimatedDeliveryTime: '5-7 business days',
+    };
+    return c.json({ settings });
+  } catch (error) {
+    console.log('Get shipping settings error:', error);
+    return c.json({ error: 'Internal server error' }, 500);
+  }
+});
+
+// Update shipping settings
+app.put("/make-server-226dc7f7/settings/shipping", async (c) => {
+  try {
+    const updates = await c.req.json();
+    const existing = await kv.get('settings:shipping') || {};
+    
+    const updated = { ...existing, ...updates };
+    await kv.set('settings:shipping', updated);
+    
+    return c.json({ success: true, settings: updated });
+  } catch (error) {
+    console.log('Update shipping settings error:', error);
+    return c.json({ error: 'Internal server error' }, 500);
+  }
+});
+
 // Generate report
 app.post("/make-server-226dc7f7/reports", async (c) => {
   try {

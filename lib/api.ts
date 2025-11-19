@@ -242,6 +242,28 @@ class APIClient {
     });
   }
 
+  async getStoreSettings() {
+    return this.request('/settings/store');
+  }
+
+  async updateStoreSettings(settings: any) {
+    return this.request('/settings/store', {
+      method: 'PUT',
+      body: JSON.stringify(settings),
+    });
+  }
+
+  async getShippingSettings() {
+    return this.request('/settings/shipping');
+  }
+
+  async updateShippingSettings(settings: any) {
+    return this.request('/settings/shipping', {
+      method: 'PUT',
+      body: JSON.stringify(settings),
+    });
+  }
+
   async generateReport(report: any) {
     return this.request('/reports', {
       method: 'POST',
