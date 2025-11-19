@@ -9,6 +9,7 @@ interface NotificationSettings {
   apiSecret: string;
   senderId: string;
   webhookUrl: string;
+  devicePhoneNumber: string;
   adminPhone: string;
   notifyOnNewOrder: boolean;
   notifyOnStatusChange: boolean;
@@ -175,7 +176,8 @@ async function sendViaCustomWebhook(
         'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        phone: phone,
+        phone: phone, // Generic field for other webhook providers
+        phoneNumber: phone, // For SMS-Gate.app compatibility
         message: message,
       }),
     });

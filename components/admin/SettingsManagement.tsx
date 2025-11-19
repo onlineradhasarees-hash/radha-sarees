@@ -56,6 +56,7 @@ export function SettingsManagement() {
     apiSecret: '',
     senderId: '',
     webhookUrl: '',
+    devicePhoneNumber: '',
     adminPhone: '+91 98765 43210',
     // Notification toggles
     notifyOnNewOrder: true,
@@ -552,10 +553,31 @@ export function SettingsManagement() {
                     <SelectItem value="twilio">Twilio</SelectItem>
                     <SelectItem value="msg91">MSG91</SelectItem>
                     <SelectItem value="textlocal">Textlocal</SelectItem>
-                    <SelectItem value="custom">Custom Webhook</SelectItem>
+                    <SelectItem value="custom">Custom Webhook (SMS-Gate.app)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* SMS-Gate.app Instructions - Show when Custom Webhook is selected */}
+              {notificationSettings.provider === 'custom' && (
+                <div className="p-4 rounded-lg bg-primary/10 border border-primary/20 space-y-3">
+                  <p className="text-foreground">
+                    <strong>📱 SMS-Gate.app Setup Guide:</strong>
+                  </p>
+                  <ol className="list-decimal list-inside space-y-2 text-muted-foreground">
+                    <li>Install SMS-Gate.app on your Android device from Play Store</li>
+                    <li>Open the app and create an account</li>
+                    <li>Copy your API URL from the app (e.g., https://sms-gate.app/3rdparty/v1/message)</li>
+                    <li>Copy your Bearer Token from app settings</li>
+                    <li>Paste the URL in "Webhook URL" field below</li>
+                    <li>Paste the token in "API Key" field below</li>
+                    <li>Enter your Android phone number (with country code) in "Device Phone Number"</li>
+                  </ol>
+                  <p className="text-muted-foreground">
+                    💡 <strong>Pro tip:</strong> SMS-Gate.app is cost-effective as it uses your mobile plan. Keep your phone charged and connected to internet!
+                  </p>
+                </div>
+              )}
 
               <div>
                 <Label>API Key</Label>
@@ -600,6 +622,20 @@ export function SettingsManagement() {
                     setNotificationSettings({ ...notificationSettings, webhookUrl: e.target.value })
                   }
                 />
+              </div>
+              <div>
+                <Label>Device Phone Number (Android Phone)</Label>
+                <Input
+                  type="tel"
+                  placeholder="+91 98765 43210"
+                  value={notificationSettings.devicePhoneNumber}
+                  onChange={(e) =>
+                    setNotificationSettings({ ...notificationSettings, devicePhoneNumber: e.target.value })
+                  }
+                />
+                <p className="text-muted-foreground mt-1">
+                  The phone number of your Android device running SMS-Gate.app (with country code)
+                </p>
               </div>
               <div>
                 <Label>Admin Phone</Label>
