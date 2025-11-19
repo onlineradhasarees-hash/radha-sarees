@@ -18,7 +18,8 @@ import {
   Download,
   Eye,
   Home,
-  Loader2
+  Loader2,
+  X
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -31,25 +32,32 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
     currentCustomer, 
     orders, 
     customerPaymentMethods,
-    customerBillingAddresses,
-    updateCustomerProfile,
-    addPaymentMethod,
-    updatePaymentMethod,
-    deletePaymentMethod,
-    addBillingAddress,
-    updateBillingAddress,
-    deleteBillingAddress
+    customerBillingAddresses
   } = useStore();
 
   const [activeTab, setActiveTab] = useState("orders");
   const [editingProfile, setEditingProfile] = useState(false);
-  const [profileData, setProfileData] = useState(currentCustomer);
+  const [profileData, setProfileData] = useState(currentCustomer || {
+    name: '',
+    email: '',
+    phone: '',
+    address: '',
+    city: '',
+    state: '',
+    pincode: ''
+  });
   const [selectedInvoice, setSelectedInvoice] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Update profile data when currentCustomer changes
+  useEffect(() => {
+    if (currentCustomer) {
+      setProfileData(currentCustomer);
+    }
+  }, [currentCustomer]);
+
   // Check if customer data is loaded
   useEffect(() => {
-    // Give a small timeout to allow data to sync
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 500);
@@ -101,11 +109,16 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
     order.customerEmail === currentCustomer?.email
   );
 
-  const handleProfileUpdate = () => {
+  const handleProfileUpdate = async () => {
     if (profileData) {
-      updateCustomerProfile(profileData);
-      setEditingProfile(false);
-      toast.success("Profile updated successfully");
+      try {
+        await syncedActions.updateCustomerProfile(profileData);
+        setEditingProfile(false);
+        toast.success("Profile updated successfully");
+      } catch (error) {
+        console.error('Profile update error:', error);
+        toast.error("Failed to update profile");
+      }
     }
   };
 
@@ -140,7 +153,7 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
             onClick={() => setSelectedInvoice(null)}
             className="absolute top-4 right-4 text-muted-foreground hover:text-foreground"
           >
-            ✕
+            <X className="h-6 w-6" />
           </button>
 
           <div className="space-y-6">
@@ -445,7 +458,7 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
                       <Input
                         id="name"
                         value={profileData?.name || ""}
-                        onChange={(e) => setProfileData({ ...profileData!, name: e.target.value })}
+                        onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
                         className="mt-1"
                       />
                     </div>
@@ -455,7 +468,7 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
                         id="email"
                         type="email"
                         value={profileData?.email || ""}
-                        onChange={(e) => setProfileData({ ...profileData!, email: e.target.value })}
+                        onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
                         className="mt-1"
                       />
                     </div>
@@ -464,7 +477,7 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
                       <Input
                         id="phone"
                         value={profileData?.phone || ""}
-                        onChange={(e) => setProfileData({ ...profileData!, phone: e.target.value })}
+                        onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
                         className="mt-1"
                       />
                     </div>
@@ -473,7 +486,7 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
                       <Input
                         id="pincode"
                         value={profileData?.pincode || ""}
-                        onChange={(e) => setProfileData({ ...profileData!, pincode: e.target.value })}
+                        onChange={(e) => setProfileData({ ...profileData, pincode: e.target.value })}
                         className="mt-1"
                       />
                     </div>
@@ -484,7 +497,7 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
                     <Input
                       id="address"
                       value={profileData?.address || ""}
-                      onChange={(e) => setProfileData({ ...profileData!, address: e.target.value })}
+                      onChange={(e) => setProfileData({ ...profileData, address: e.target.value })}
                       className="mt-1"
                     />
                   </div>
@@ -495,7 +508,7 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
                       <Input
                         id="city"
                         value={profileData?.city || ""}
-                        onChange={(e) => setProfileData({ ...profileData!, city: e.target.value })}
+                        onChange={(e) => setProfileData({ ...profileData, city: e.target.value })}
                         className="mt-1"
                       />
                     </div>
@@ -504,7 +517,7 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
                       <Input
                         id="state"
                         value={profileData?.state || ""}
-                        onChange={(e) => setProfileData({ ...profileData!, state: e.target.value })}
+                        onChange={(e) => setProfileData({ ...profileData, state: e.target.value })}
                         className="mt-1"
                       />
                     </div>
@@ -570,14 +583,18 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
             <div className="flex justify-between items-center">
               <h2>Payment Methods</h2>
               <Button 
-                onClick={() => {
-                  addPaymentMethod({
-                    type: 'card',
-                    name: 'New Card',
-                    details: '**** **** **** 1234',
-                    isDefault: customerPaymentMethods.length === 0
-                  });
-                  toast.success("Payment method added");
+                onClick={async () => {
+                  try {
+                    await syncedActions.addPaymentMethod({
+                      type: 'card',
+                      name: 'New Card',
+                      details: '**** **** **** 1234',
+                      isDefault: customerPaymentMethods.length === 0
+                    });
+                    toast.success("Payment method added");
+                  } catch (error) {
+                    console.error('Error adding payment method:', error);
+                  }
                 }}
                 className="bg-primary text-primary-foreground"
               >
@@ -609,9 +626,13 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
                     <div className="flex gap-2">
                       {!method.isDefault && (
                         <Button
-                          onClick={() => {
-                            updatePaymentMethod(method.id, { isDefault: true });
-                            toast.success("Default payment method updated");
+                          onClick={async () => {
+                            try {
+                              await syncedActions.updatePaymentMethod(method.id, { isDefault: true });
+                              toast.success("Default payment method updated");
+                            } catch (error) {
+                              console.error('Error updating payment method:', error);
+                            }
                           }}
                           className="flex-1 bg-secondary text-secondary-foreground"
                         >
@@ -619,9 +640,13 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
                         </Button>
                       )}
                       <Button
-                        onClick={() => {
-                          deletePaymentMethod(method.id);
-                          toast.success("Payment method removed");
+                        onClick={async () => {
+                          try {
+                            await syncedActions.deletePaymentMethod(method.id);
+                            toast.success("Payment method removed");
+                          } catch (error) {
+                            console.error('Error deleting payment method:', error);
+                          }
                         }}
                         className="bg-destructive text-destructive-foreground"
                       >
@@ -639,17 +664,21 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
             <div className="flex justify-between items-center">
               <h2>Billing Addresses</h2>
               <Button 
-                onClick={() => {
-                  addBillingAddress({
-                    name: currentCustomer?.name || '',
-                    address: currentCustomer?.address || '',
-                    city: currentCustomer?.city || '',
-                    state: currentCustomer?.state || '',
-                    pincode: currentCustomer?.pincode || '',
-                    phone: currentCustomer?.phone || '',
-                    isDefault: customerBillingAddresses.length === 0
-                  });
-                  toast.success("Billing address added");
+                onClick={async () => {
+                  try {
+                    await syncedActions.addBillingAddress({
+                      name: currentCustomer?.name || '',
+                      address: currentCustomer?.address || '',
+                      city: currentCustomer?.city || '',
+                      state: currentCustomer?.state || '',
+                      pincode: currentCustomer?.pincode || '',
+                      phone: currentCustomer?.phone || '',
+                      isDefault: customerBillingAddresses.length === 0
+                    });
+                    toast.success("Billing address added");
+                  } catch (error) {
+                    console.error('Error adding billing address:', error);
+                  }
                 }}
                 className="bg-primary text-primary-foreground"
               >
@@ -680,9 +709,13 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
                     <div className="flex gap-2">
                       {!address.isDefault && (
                         <Button
-                          onClick={() => {
-                            updateBillingAddress(address.id, { isDefault: true });
-                            toast.success("Default billing address updated");
+                          onClick={async () => {
+                            try {
+                              await syncedActions.updateBillingAddress(address.id, { isDefault: true });
+                              toast.success("Default billing address updated");
+                            } catch (error) {
+                              console.error('Error updating billing address:', error);
+                            }
                           }}
                           className="flex-1 bg-secondary text-secondary-foreground"
                         >
@@ -690,9 +723,13 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
                         </Button>
                       )}
                       <Button
-                        onClick={() => {
-                          deleteBillingAddress(address.id);
-                          toast.success("Billing address removed");
+                        onClick={async () => {
+                          try {
+                            await syncedActions.deleteBillingAddress(address.id);
+                            toast.success("Billing address removed");
+                          } catch (error) {
+                            console.error('Error deleting billing address:', error);
+                          }
                         }}
                         className="bg-destructive text-destructive-foreground"
                       >

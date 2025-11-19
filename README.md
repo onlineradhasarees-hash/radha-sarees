@@ -2,6 +2,11 @@
 
 A comprehensive e-commerce website for premium Indian sarees, featuring a complete shopping experience with product catalog, cart functionality, wishlist, category filtering, search, and a fully functional admin panel.
 
+## 🚀 Live Demo
+
+- **Store**: [Your deployed URL]
+- **Admin Panel**: [Your deployed URL]/admin
+
 ## Features
 
 ### Customer Features
@@ -9,71 +14,125 @@ A comprehensive e-commerce website for premium Indian sarees, featuring a comple
 - 🔍 Search and filter functionality
 - ❤️ Wishlist management
 - 🛒 Shopping cart with real-time updates
-- 💳 Complete checkout process
-- 👤 User authentication and dashboard
-- 📦 Order tracking
-- 💰 Multiple payment methods
+- 💳 Complete checkout process with payment gateway integration
+- 👤 User authentication and customer dashboard
+- 📦 Order tracking and invoice generation
+- 💰 Multiple payment methods support
+- 📱 Fully responsive design
 
 ### Admin Features
-- 📊 Comprehensive dashboard with analytics
-- 📦 Product management (Add, Edit, Delete, Bulk Import)
+- 📊 Comprehensive dashboard with analytics and charts
+- 📦 Product management (Add, Edit, Delete, Bulk Import via CSV)
 - 📋 Order management with status updates
 - 👥 Customer management
-- 💳 Payment gateway settings
-- 📈 Report generation
-- ⚙️ Site settings customization
+- 💳 Payment gateway settings (Razorpay, PhonePe)
+- 📈 Report generation (Sales, Products, Orders)
+- ⚙️ Site settings customization (Store, Shipping, Payment)
+- 🖼️ Image management system
 
 ## Tech Stack
 
-- **Frontend**: React + TypeScript
-- **Styling**: Tailwind CSS 4.0 with custom design tokens
+- **Frontend**: React 18 + TypeScript + Vite
+- **Styling**: Tailwind CSS 4.0 with custom design system
 - **State Management**: Zustand with localStorage persistence
 - **Backend**: Supabase Edge Functions (Hono + Deno)
 - **Database**: Supabase PostgreSQL with KV store
-- **Authentication**: Supabase Auth
+- **Authentication**: Supabase Auth with JWT
 - **UI Components**: shadcn/ui
 - **Icons**: Lucide React
 - **Charts**: Recharts
 - **Notifications**: Sonner
+- **Routing**: Client-side SEO-friendly routing
 
 ## Deployment
 
 ### Prerequisites
 - Node.js 18+ installed
 - Supabase account
-- Vercel account (for deployment)
+- Vercel or Netlify account (for deployment)
 
 ### Local Development
 
-1. Install dependencies:
+1. Clone the repository:
+```bash
+git clone <your-repo-url>
+cd radha-sarees
+```
+
+2. Install dependencies:
 ```bash
 npm install
 ```
 
-2. Start development server:
+3. Create `.env` file with your Supabase credentials:
+```bash
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+4. Start development server:
 ```bash
 npm run dev
 ```
 
-3. Open http://localhost:5173
+5. Open http://localhost:5173
 
 ### Deploy to Vercel
 
 1. Push your code to GitHub
 2. Connect your GitHub repository to Vercel
-3. Configure environment variables in Vercel dashboard (see below)
+3. Configure environment variables in Vercel dashboard
 4. Deploy!
+
+### Deploy to Netlify
+
+1. Push your code to GitHub
+2. Connect your GitHub repository to Netlify
+3. Configure build settings:
+   - Build command: `npm run build`
+   - Publish directory: `dist`
+4. Add environment variables
+5. Deploy!
+
+### ⚠️ Security Configuration
+
+**IMPORTANT - Before Pushing to GitHub:**
+
+1. **Never commit these files:**
+   - `.env` files (already in `.gitignore`)
+   - `node_modules/` directory
+   - Any files containing API keys or secrets
+
+2. **Environment Variables:**
+   - All Supabase credentials should be stored in environment variables
+   - In Vercel/Netlify: Add them in the dashboard
+   - Locally: Use `.env` file (never commit this)
+
+3. **Change default passwords:**
+   - Update admin credentials in production
+   - Update any hardcoded passwords
+
+4. **Review `.gitignore`:**
+   - Ensure all sensitive files are excluded
+   - Check that documentation files (*.md) are excluded except README.md
 
 ### Environment Variables
 
-The following environment variables are already configured in your Supabase project:
+**Required for deployment:**
 
-- `SUPABASE_URL` - Your Supabase project URL
-- `SUPABASE_ANON_KEY` - Your Supabase anonymous key
-- `SUPABASE_SERVICE_ROLE_KEY` - Your Supabase service role key (backend only)
-- `SUPABASE_DB_URL` - Your Supabase database URL
+```bash
+# Frontend (Vercel/Netlify)
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your_anon_key_here
 
-**Note:** These are automatically configured when running on Figma Make. For Vercel deployment, you'll need to add them to Vercel's environment variables.
+# Backend (Supabase Edge Functions - Already configured)
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your_anon_key_here
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
+SUPABASE_DB_URL=your_database_url_here
+```
+
+**⚠️ NEVER commit these values to Git!**
 
 ## Architecture
 
