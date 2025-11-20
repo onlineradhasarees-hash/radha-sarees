@@ -19,6 +19,8 @@ import { CustomerDashboard } from "./components/CustomerDashboard";
 import { Button } from "./components/ui/button";
 import { toast } from "sonner";
 import { Toaster } from "./components/ui/sonner";
+import { toSlug, fromSlug, toProductSlug, extractProductId, toCategoryUrl, toProductUrl } from "./lib/urlUtils";
+import type { Product } from "./lib/store";
 
 type ViewType = 'store' | 'admin' | 'product' | 'category' | 'customer-dashboard' | 'wishlist' | 'search';
 
@@ -28,27 +30,13 @@ interface CartItem {
   price: number;
   image: string;
   quantity: number;
+  category?: string;
+  description?: string;
   selectedVariation?: {
     id: string;
     color: string;
-    priceAdjustment?: number;
+    priceAdjustment: number;
   };
-}
-
-interface Product {
-  id: number;
-  name: string;
-  price: number;
-  image: string;
-  category: string;
-  description?: string;
-  tags?: string[];
-  stock?: number;
-  variations?: {
-    id: string;
-    color: string;
-    priceAdjustment?: number;
-  }[];
 }
 
 export default function App() {
@@ -75,14 +63,18 @@ export default function App() {
       } else if (path === '/customer-dashboard') {
         setView('customer-dashboard');
       } else if (path.startsWith('/product/')) {
-        const productId = parseInt(path.replace('/product/', ''));
-        if (!isNaN(productId)) {
+        const slug = path.replace('/product/', '');
+        // Extract product ID from slug
+        const productId = extractProductId(slug);
+        if (productId) {
           setSelectedProductId(productId);
           setView('product');
         }
       } else if (path.startsWith('/category/')) {
-        const category = decodeURIComponent(path.replace('/category/', ''));
-        setSelectedCategoryForPage(category);
+        const categorySlug = path.replace('/category/', '');
+        // Convert slug back to category name
+        const categoryName = fromSlug(categorySlug);
+        setSelectedCategoryForPage(categoryName);
         setView('category');
       } else if (path === '/wishlist') {
         setView('wishlist');
@@ -193,17 +185,20 @@ export default function App() {
   };
 
   const handleCategoryPageSelect = (categoryName: string) => {
-    window.history.pushState({}, '', `/category/${encodeURIComponent(categoryName)}`);
+    window.history.pushState({}, '', `/category/${toSlug(categoryName)}`);
     setSelectedCategoryForPage(categoryName);
     setView('category');
     window.scrollTo(0, 0);
   };
 
   const handleProductClick = (productId: number) => {
-    window.history.pushState({}, '', `/product/${productId}`);
-    setSelectedProductId(productId);
-    setView('product');
-    window.scrollTo(0, 0);
+    const product = products.find(p => p.id === productId);
+    if (product) {
+      window.history.pushState({}, '', toProductUrl(product.name, product.id));
+      setSelectedProductId(productId);
+      setView('product');
+      window.scrollTo(0, 0);
+    }
   };
 
   const handleBackToHome = () => {

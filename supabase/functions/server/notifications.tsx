@@ -1,15 +1,10 @@
-// SMS and WhatsApp notification handler
+// Fast2SMS notification handler
 import * as kv from './kv_store.tsx';
 
 interface NotificationSettings {
   smsEnabled: boolean;
-  whatsappEnabled: boolean;
-  provider: string;
   apiKey: string;
-  apiSecret: string;
   senderId: string;
-  webhookUrl: string;
-  devicePhoneNumber: string;
   adminPhone: string;
   notifyOnNewOrder: boolean;
   notifyOnStatusChange: boolean;
@@ -19,6 +14,7 @@ interface NotificationSettings {
   orderDeliveredTemplate: string;
   orderCancelledTemplate: string;
   adminOrderTemplate: string;
+  route: 'transactional' | 'promotional'; // Fast2SMS routes
 }
 
 // Template variable replacement
@@ -34,223 +30,61 @@ function replaceTemplateVariables(
   return message;
 }
 
-// Send SMS via Twilio
-async function sendViaTwilio(
+// Send SMS via Fast2SMS
+async function sendViaFast2SMS(
   phone: string,
   message: string,
   apiKey: string,
-  apiSecret: string,
-  senderId: string
+  senderId: string,
+  route: 'transactional' | 'promotional' = 'transactional'
 ): Promise<boolean> {
   try {
-    const accountSid = apiKey;
-    const authToken = apiSecret;
-    const from = senderId;
+    // Fast2SMS API endpoint
+    const url = 'https://www.fast2sms.com/dev/bulkV2';
 
-    const credentials = btoa(`${accountSid}:${authToken}`);
-    const url = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`;
-
-    const body = new URLSearchParams({
-      From: from,
-      To: phone,
-      Body: message,
-    });
-
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Basic ${credentials}`,
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: body.toString(),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Twilio SMS error:', errorText);
-      return false;
+    // Clean phone number (remove + and country code if present)
+    let cleanPhone = phone.replace(/\D/g, '');
+    if (cleanPhone.startsWith('91') && cleanPhone.length > 10) {
+      cleanPhone = cleanPhone.substring(2);
     }
 
-    console.log('SMS sent successfully via Twilio');
-    return true;
-  } catch (error) {
-    console.error('Error sending SMS via Twilio:', error);
-    return false;
-  }
-}
-
-// Send SMS via MSG91
-async function sendViaMSG91(
-  phone: string,
-  message: string,
-  apiKey: string,
-  senderId: string
-): Promise<boolean> {
-  try {
-    const url = 'https://api.msg91.com/api/v5/flow/';
-
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'authkey': apiKey,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        sender: senderId,
-        route: '4',
-        country: '91',
-        sms: [
-          {
-            message: message,
-            to: [phone],
-          },
-        ],
-      }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('MSG91 SMS error:', errorText);
-      return false;
-    }
-
-    console.log('SMS sent successfully via MSG91');
-    return true;
-  } catch (error) {
-    console.error('Error sending SMS via MSG91:', error);
-    return false;
-  }
-}
-
-// Send SMS via Textlocal
-async function sendViaTextlocal(
-  phone: string,
-  message: string,
-  apiKey: string,
-  senderId: string
-): Promise<boolean> {
-  try {
-    const url = 'https://api.textlocal.in/send/';
-
-    const body = new URLSearchParams({
-      apikey: apiKey,
-      sender: senderId,
-      numbers: phone,
+    // Prepare request body based on route
+    const body: any = {
+      authorization: apiKey,
+      route: route,
+      numbers: cleanPhone,
       message: message,
-    });
-
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: body.toString(),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Textlocal SMS error:', errorText);
-      return false;
-    }
-
-    console.log('SMS sent successfully via Textlocal');
-    return true;
-  } catch (error) {
-    console.error('Error sending SMS via Textlocal:', error);
-    return false;
-  }
-}
-
-// Send via custom webhook
-async function sendViaCustomWebhook(
-  phone: string,
-  message: string,
-  webhookUrl: string,
-  apiKey: string,
-  apiSecret?: string
-): Promise<boolean> {
-  try {
-    // Prepare headers
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
+      flash: 0, // 0 = normal SMS, 1 = flash SMS
     };
 
-    // SMS-Gate.app supports both Basic Auth (username/password) and Bearer token
-    if (apiSecret) {
-      // Basic Authentication (username = apiKey, password = apiSecret)
-      const credentials = btoa(`${apiKey}:${apiSecret}`);
-      headers['Authorization'] = `Basic ${credentials}`;
-    } else if (apiKey) {
-      // Bearer token authentication
-      headers['Authorization'] = `Bearer ${apiKey}`;
+    // Add sender ID for transactional route
+    if (route === 'transactional') {
+      body.sender_id = senderId;
     }
 
-    const response = await fetch(webhookUrl, {
-      method: 'POST',
-      headers: headers,
-      body: JSON.stringify({
-        phone: phone, // Generic field for other webhook providers
-        phoneNumber: phone, // For SMS-Gate.app compatibility
-        message: message,
-      }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Custom webhook error:', errorText);
-      return false;
-    }
-
-    console.log('Notification sent successfully via custom webhook');
-    return true;
-  } catch (error) {
-    console.error('Error sending notification via custom webhook:', error);
-    return false;
-  }
-}
-
-// Send WhatsApp via Twilio
-async function sendWhatsAppViaTwilio(
-  phone: string,
-  message: string,
-  apiKey: string,
-  apiSecret: string,
-  senderId: string
-): Promise<boolean> {
-  try {
-    const accountSid = apiKey;
-    const authToken = apiSecret;
-    const from = `whatsapp:${senderId}`;
-    const to = `whatsapp:${phone}`;
-
-    const credentials = btoa(`${accountSid}:${authToken}`);
-    const url = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`;
-
-    const body = new URLSearchParams({
-      From: from,
-      To: to,
-      Body: message,
-    });
+    // Convert to URL-encoded format
+    const formData = new URLSearchParams(body);
 
     const response = await fetch(url, {
       method: 'POST',
       headers: {
-        'Authorization': `Basic ${credentials}`,
         'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: body.toString(),
+      body: formData.toString(),
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Twilio WhatsApp error:', errorText);
+    const responseData = await response.json();
+
+    // Check if the request was successful
+    if (!response.ok || !responseData.return) {
+      console.error('Fast2SMS error:', responseData);
       return false;
     }
 
-    console.log('WhatsApp message sent successfully via Twilio');
+    console.log('SMS sent successfully via Fast2SMS:', responseData);
     return true;
   } catch (error) {
-    console.error('Error sending WhatsApp via Twilio:', error);
+    console.error('Error sending SMS via Fast2SMS:', error);
     return false;
   }
 }
@@ -259,38 +93,21 @@ async function sendWhatsAppViaTwilio(
 export async function sendNotification(
   phone: string,
   message: string,
-  settings: NotificationSettings,
-  type: 'sms' | 'whatsapp' = 'sms'
+  settings: NotificationSettings
 ): Promise<boolean> {
-  const { provider, apiKey, apiSecret, senderId, webhookUrl } = settings;
-
-  if (type === 'whatsapp' && settings.whatsappEnabled) {
-    // WhatsApp is primarily supported via Twilio
-    if (provider === 'twilio') {
-      return await sendWhatsAppViaTwilio(phone, message, apiKey, apiSecret, senderId);
-    } else if (provider === 'custom') {
-      return await sendViaCustomWebhook(phone, message, webhookUrl, apiKey, apiSecret);
-    } else {
-      console.log('WhatsApp not supported with selected provider');
-      return false;
-    }
-  } else if (type === 'sms' && settings.smsEnabled) {
-    switch (provider) {
-      case 'twilio':
-        return await sendViaTwilio(phone, message, apiKey, apiSecret, senderId);
-      case 'msg91':
-        return await sendViaMSG91(phone, message, apiKey, senderId);
-      case 'textlocal':
-        return await sendViaTextlocal(phone, message, apiKey, senderId);
-      case 'custom':
-        return await sendViaCustomWebhook(phone, message, webhookUrl, apiKey, apiSecret);
-      default:
-        console.error('Unknown SMS provider:', provider);
-        return false;
-    }
+  if (!settings.smsEnabled) {
+    console.log('SMS notifications are disabled');
+    return false;
   }
 
-  return false;
+  const { apiKey, senderId, route } = settings;
+
+  if (!apiKey) {
+    console.error('Fast2SMS API key not configured');
+    return false;
+  }
+
+  return await sendViaFast2SMS(phone, message, apiKey, senderId, route);
 }
 
 // Send order placed notification
@@ -301,8 +118,8 @@ export async function sendOrderPlacedNotification(
 ): Promise<void> {
   try {
     const settings = await kv.get<NotificationSettings>('notification_settings');
-    if (!settings || (!settings.smsEnabled && !settings.whatsappEnabled)) {
-      console.log('Notifications are disabled');
+    if (!settings || !settings.smsEnabled) {
+      console.log('SMS notifications are disabled');
       return;
     }
 
@@ -325,15 +142,10 @@ export async function sendOrderPlacedNotification(
     );
 
     // Send to customer
-    if (settings.smsEnabled) {
-      await sendNotification(customerPhone, message, settings, 'sms');
-    }
-    if (settings.whatsappEnabled) {
-      await sendNotification(customerPhone, message, settings, 'whatsapp');
-    }
+    await sendNotification(customerPhone, message, settings);
 
     // Send to admin
-    if (settings.notifyAdminOnOrder) {
+    if (settings.notifyAdminOnOrder && settings.adminPhone) {
       const adminMessage = replaceTemplateVariables(
         settings.adminOrderTemplate,
         {
@@ -342,12 +154,7 @@ export async function sendOrderPlacedNotification(
         }
       );
 
-      if (settings.smsEnabled) {
-        await sendNotification(settings.adminPhone, adminMessage, settings, 'sms');
-      }
-      if (settings.whatsappEnabled) {
-        await sendNotification(settings.adminPhone, adminMessage, settings, 'whatsapp');
-      }
+      await sendNotification(settings.adminPhone, adminMessage, settings);
     }
   } catch (error) {
     console.error('Error sending order placed notification:', error);
@@ -363,8 +170,8 @@ export async function sendOrderStatusNotification(
 ): Promise<void> {
   try {
     const settings = await kv.get<NotificationSettings>('notification_settings');
-    if (!settings || (!settings.smsEnabled && !settings.whatsappEnabled)) {
-      console.log('Notifications are disabled');
+    if (!settings || !settings.smsEnabled) {
+      console.log('SMS notifications are disabled');
       return;
     }
 
@@ -395,12 +202,7 @@ export async function sendOrderStatusNotification(
     const message = replaceTemplateVariables(template, variables);
 
     // Send to customer only (not admin for status changes)
-    if (settings.smsEnabled) {
-      await sendNotification(customerPhone, message, settings, 'sms');
-    }
-    if (settings.whatsappEnabled) {
-      await sendNotification(customerPhone, message, settings, 'whatsapp');
-    }
+    await sendNotification(customerPhone, message, settings);
   } catch (error) {
     console.error('Error sending order status notification:', error);
   }

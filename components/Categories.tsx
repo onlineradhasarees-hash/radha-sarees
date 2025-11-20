@@ -1,6 +1,7 @@
 import { Card, CardContent } from "./ui/card";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { useStore } from "../lib/store";
+import { toCategoryUrl } from "../lib/urlUtils";
 
 interface Category {
   id: string;

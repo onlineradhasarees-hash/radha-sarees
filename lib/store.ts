@@ -400,11 +400,11 @@ export const useStore = create<StoreState>()(
         heroOverlayColor: '#000000',
         heroShowCategories: true, // Default to showing categories
         categories: [
-          { id: 'semi-silk', name: 'Semi Silk Sarees', displayName: 'Semi Silk Sarees', url: '/category/Semi%20Silk%20Sarees' },
-          { id: 'cotton', name: 'Cotton Sarees', displayName: 'Cotton Sarees', url: '/category/Cotton%20Sarees' },
-          { id: 'boutique', name: 'Boutique Sarees', displayName: 'Boutique Sarees', url: '/category/Boutique%20Sarees' },
-          { id: 'partywear', name: 'Party wear sarees', displayName: 'Party wear sarees', url: '/category/Party%20wear%20sarees' },
-          { id: 'under-499', name: 'Under Rs.499', displayName: 'Under Rs.499', url: '/category/Under%20Rs.499' }
+          { id: 'semi-silk', name: 'Semi Silk Sarees', displayName: 'Semi Silk Sarees', url: '/category/semi-silk-sarees' },
+          { id: 'cotton', name: 'Cotton Sarees', displayName: 'Cotton Sarees', url: '/category/cotton-sarees' },
+          { id: 'boutique', name: 'Boutique Sarees', displayName: 'Boutique Sarees', url: '/category/boutique-sarees' },
+          { id: 'partywear', name: 'Party wear sarees', displayName: 'Party wear sarees', url: '/category/party-wear-sarees' },
+          { id: 'under-499', name: 'Under Rs.499', displayName: 'Under Rs.499', url: '/category/under-rs-499' }
         ]
       },
       

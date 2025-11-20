@@ -50,13 +50,9 @@ export function SettingsManagement() {
 
   const [notificationSettings, setNotificationSettings] = useState({
     smsEnabled: false,
-    whatsappEnabled: false,
-    provider: 'twilio', // twilio, msg91, textlocal, custom
     apiKey: '',
-    apiSecret: '',
     senderId: '',
-    webhookUrl: '',
-    devicePhoneNumber: '',
+    route: 'transactional' as 'transactional' | 'promotional',
     adminPhone: '+91 98765 43210',
     // Notification toggles
     notifyOnNewOrder: true,
